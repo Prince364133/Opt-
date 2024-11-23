@@ -126,6 +126,9 @@
     <input type="text" id="phoneNumber" placeholder="Enter phone number with country code (e.g., 919876543210)">
     <button id="openWhatsAppBtn">Send OTP via WhatsApp</button>
 
+    <!-- Price Input -->
+    <input type="number" id="priceInput" placeholder="Enter Price (₹)" required>
+
     <!-- OTP Verification Box -->
     <div id="otpVerificationBox" class="hidden">
       <h3>Verify OTP</h3>
@@ -147,20 +150,18 @@
     <p><strong>Agent Name:</strong> <span id="agentName">John Doe</span></p>
     <p><strong>OTP Verified Count:</strong> <span id="otpCount">0</span></p>
     <p><strong>Last Verified:</strong> <span id="lastVerifiedDateTime">N/A</span></p>
+    <p><strong>Total Price:</strong> ₹<span id="totalPrice">0</span></p>
     <input type="file" id="uploadProfile" accept="image/*">
     <button id="removeProfile" class="small-btn">Remove Profile</button>
+    <button id="resetData" class="small-btn" style="background-color: #e67e22;">Reset Data</button>
     <button id="closeProfile" class="small-btn" style="background-color: #3498db;">Close</button>
   </div>
 
   <script>
     let generatedOTP = null;
-    let otpVerifiedCount = localStorage.getItem('otpCount') || 0;
+    let otpVerifiedCount = parseInt(localStorage.getItem('otpCount')) || 0;
+    let totalPrice = parseFloat(localStorage.getItem('totalPrice')) || 0;
 
-    function generateOTP() {
-      return Math.floor(100000 + Math.random() * 900000).toString();
-    }
-
-    // Load data from localStorage
     const loadLocalData = () => {
       const profilePhoto = localStorage.getItem('profilePhoto') || 'default-avatar.png';
       const agentName = localStorage.getItem('agentName') || 'John Doe';
@@ -171,22 +172,34 @@
       document.getElementById('agentName').textContent = agentName;
       document.getElementById('otpCount').textContent = otpVerifiedCount;
       document.getElementById('lastVerifiedDateTime').textContent = lastVerified;
+      document.getElementById('totalPrice').textContent = totalPrice.toFixed(2);
     };
 
-    // Save data to localStorage
     const saveLocalData = () => {
       localStorage.setItem('otpCount', otpVerifiedCount);
       localStorage.setItem('lastVerified', new Date().toLocaleString());
+      localStorage.setItem('totalPrice', totalPrice.toFixed(2));
     };
 
     document.getElementById('openWhatsAppBtn').addEventListener('click', () => {
       const phoneNumber = document.getElementById('phoneNumber').value.trim();
+      const price = parseFloat(document.getElementById('priceInput').value) || 0;
+
+      // Validate that the price is not empty
+      if (price <= 0) {
+        alert('Please enter a valid price.');
+        return;
+      }
+
       if (!/^\d{10,15}$/.test(phoneNumber)) {
         alert('Please enter a valid phone number.');
         return;
       }
 
-      generatedOTP = generateOTP();
+      totalPrice += price;
+      saveLocalData();
+
+      generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
       const message = `Your OTP for receiving your product is: ${generatedOTP}`;
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
@@ -200,9 +213,10 @@
 
       if (enteredOTP === generatedOTP) {
         otpVerifiedCount++;
+        saveLocalData();
+
         resultElement.textContent = 'OTP Verified Successfully!';
         resultElement.style.color = 'green';
-        saveLocalData();
 
         setTimeout(() => {
           resultElement.textContent = '';
@@ -216,37 +230,49 @@
       }
     });
 
-    document.getElementById('floatingIcon').addEventListener('click', () => {
-      const container = document.getElementById('floatingContainer');
-      container.style.display = container.style.display === 'block' ? 'none' : 'block';
+    document.getElementById('resetData').addEventListener('click', () => {
+      const userPassword = prompt('Enter the password to reset the data:');
+      if (userPassword === '364133') {
+        localStorage.clear();
+        otpVerifiedCount = 0;
+        totalPrice = 0;loadLocalData();
+        alert('All data has been reset successfully!');
+      } else {
+        alert('Incorrect password. Data reset failed.');
+      }
     });
 
-    document.getElementById('removeProfile').addEventListener('click', () => {
-      localStorage.removeItem('profilePhoto');
-      document.getElementById('profilePreview').src = 'default-avatar.png';
-      document.getElementById('agentPhoto').src = 'default-avatar.png';
+    document.getElementById('floatingIcon').addEventListener('click', () => {
+      const container = document.getElementById('floatingContainer');
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
     });
 
     document.getElementById('closeProfile').addEventListener('click', () => {
       document.getElementById('floatingContainer').style.display = 'none';
     });
 
+    document.getElementById('removeProfile').addEventListener('click', () => {
+      if (confirm('Are you sure you want to remove the profile photo?')) {
+        localStorage.removeItem('profilePhoto');
+        loadLocalData();
+      }
+    });
+
     document.getElementById('uploadProfile').addEventListener('change', (event) => {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function (e) {
-          const photoUrl = e.target.result;
-          document.getElementById('profilePreview').src = photoUrl;
-          document.getElementById('agentPhoto').src = photoUrl;
-          localStorage.setItem('profilePhoto', photoUrl);
+        reader.onload = () => {
+          const photoData = reader.result;
+          localStorage.setItem('profilePhoto', photoData);
+          loadLocalData();
         };
         reader.readAsDataURL(file);
       }
     });
 
-    // Initial load of local data
-    loadLocalData();
+    // Load existing data on page load
+    window.onload = loadLocalData;
   </script>
 </body>
 </html>

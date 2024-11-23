@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snap Shiksha - WhatsApp OTP Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .header span.english {
+      color: #2c3e50;
+    }
+    .header span.hindi {
+      font-family: "Noto Sans Devanagari", sans-serif;
+      color: #e74c3c;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+    input {
+      border: 1px solid #ddd;
+    }
+    button {
+      border: none;
+      cursor: pointer;
+      background-color: #25D366;
+      color: white;
+    }
+    button:hover {
+      background-color: #128C7E;
+    }
+    .hidden {
+      display: none;
+    }
+    .result {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+    .floating-icon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+    }
+    .floating-icon img {
+      width: 100%;
+      height: 100%;
+    }
+    .floating-container {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 350px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      text-align: left;
+      display: none;
+    }
+    .floating-container h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .floating-container img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 10px;
+    }
+    .floating-container p {
+      margin: 5px 0;
+    }
+    #uploadProfile {
+      margin-top: 10px;
+    }
+    .small-btn {
+      display: inline-block;
+      padding: 5px 10px;
+      font-size: 14px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .small-btn:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="english">Snap</span> <span class="hindi">शिक्षा</span>
+    </div>
+
+    <!-- Phone Number Input -->
+    <input type="text" id="phoneNumber" placeholder="Enter phone number with country code (e.g., 919876543210)">
+    <button id="openWhatsAppBtn">Send OTP via WhatsApp</button>
+
+    <!-- OTP Verification Box -->
+    <div id="otpVerificationBox" class="hidden">
+      <h3>Verify OTP</h3>
+      <input type="text" id="otpInput" placeholder="Enter OTP">
+      <button id="verifyOtpBtn">Verify OTP</button>
+      <p id="verificationResult" class="result"></p>
+    </div>
+  </div>
+
+  <!-- Floating Profile Icon -->
+  <div class="floating-icon" id="floatingIcon">
+    <img id="profilePreview" src="default-avatar.png" alt="Profile Icon">
+  </div>
+
+  <!-- Floating Container -->
+  <div class="floating-container" id="floatingContainer">
+    <h3>Agent Details</h3>
+    <img id="agentPhoto" src="default-avatar.png" alt="Agent Photo">
+    <p><strong>Agent Name:</strong> <span id="agentName">John Doe</span></p>
+    <p><strong>OTP Verified Count:</strong> <span id="otpCount">0</span></p>
+    <p><strong>Last Verified:</strong> <span id="lastVerifiedDateTime">N/A</span></p>
+    <input type="file" id="uploadProfile" accept="image/*">
+    <button id="removeProfile" class="small-btn">Remove Profile</button>
+    <button id="closeProfile" class="small-btn" style="background-color: #3498db;">Close</button>
+  </div>
+
+  <script>
+    let generatedOTP = null;
+    let otpVerifiedCount = localStorage.getItem('otpCount') || 0;
+
+    function generateOTP() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    // Load data from localStorage
+    const loadLocalData = () => {
+      const profilePhoto = localStorage.getItem('profilePhoto') || 'default-avatar.png';
+      const agentName = localStorage.getItem('agentName') || 'John Doe';
+      const lastVerified = localStorage.getItem('lastVerified') || 'N/A';
+
+      document.getElementById('profilePreview').src = profilePhoto;
+      document.getElementById('agentPhoto').src = profilePhoto;
+      document.getElementById('agentName').textContent = agentName;
+      document.getElementById('otpCount').textContent = otpVerifiedCount;
+      document.getElementById('lastVerifiedDateTime').textContent = lastVerified;
+    };
+
+    // Save data to localStorage
+    const saveLocalData = () => {
+      localStorage.setItem('otpCount', otpVerifiedCount);
+      localStorage.setItem('lastVerified', new Date().toLocaleString());
+    };
+
+    document.getElementById('openWhatsAppBtn').addEventListener('click', () => {
+      const phoneNumber = document.getElementById('phoneNumber').value.trim();
+      if (!/^\d{10,15}$/.test(phoneNumber)) {
+        alert('Please enter a valid phone number.');
+        return;
+      }
+
+      generatedOTP = generateOTP();
+      const message = `Your OTP for receiving your product is: ${generatedOTP}`;
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+
+      document.getElementById('otpVerificationBox').classList.remove('hidden');
+    });
+
+    document.getElementById('verifyOtpBtn').addEventListener('click', () => {
+      const enteredOTP = document.getElementById('otpInput').value.trim();
+      const resultElement = document.getElementById('verificationResult');
+
+      if (enteredOTP === generatedOTP) {
+        otpVerifiedCount++;
+        resultElement.textContent = 'OTP Verified Successfully!';
+        resultElement.style.color = 'green';
+        saveLocalData();
+
+        setTimeout(() => {
+          resultElement.textContent = '';
+          document.getElementById('otpVerificationBox').classList.add('hidden');
+          document.getElementById('phoneNumber').value = '';
+          document.getElementById('otpInput').value = '';
+        }, 3000);
+      } else {
+        resultElement.textContent = 'Invalid OTP!';
+        resultElement.style.color = 'red';
+      }
+    });
+
+    document.getElementById('floatingIcon').addEventListener('click', () => {
+      const container = document.getElementById('floatingContainer');
+      container.style.display = container.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.getElementById('removeProfile').addEventListener('click', () => {
+      localStorage.removeItem('profilePhoto');
+      document.getElementById('profilePreview').src = 'default-avatar.png';
+      document.getElementById('agentPhoto').src = 'default-avatar.png';
+    });
+
+    document.getElementById('closeProfile').addEventListener('click', () => {
+      document.getElementById('floatingContainer').style.display = 'none';
+    });
+
+    document.getElementById('uploadProfile').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const photoUrl = e.target.result;
+          document.getElementById('profilePreview').src = photoUrl;
+          document.getElementById('agentPhoto').src = photoUrl;
+          localStorage.setItem('profilePhoto', photoUrl);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Initial load of local data
+    loadLocalData();
+  </script>
+</body>
+</html>

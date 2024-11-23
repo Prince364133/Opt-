@@ -147,6 +147,9 @@
         <span class="english">Snap</span> <span class="hindi">शिक्षा</span>
       </div>
 
+      <!-- Name Input -->
+      <input type="text" id="customerName" placeholder="Enter your name">
+
       <!-- Phone Number Input -->
       <input type="text" id="phoneNumber" placeholder="Enter phone number with country code (e.g., 919876543210)">
       <button id="openWhatsAppBtn">Send OTP via WhatsApp</button>
@@ -161,6 +164,10 @@
         <button id="verifyOtpBtn">Verify OTP</button>
         <p id="verificationResult" class="result"></p>
       </div>
+
+      <!-- Customer Name Display -->
+      <p id="displayCustomerName" class="result hidden"></p>
+
     </div>
 
     <!-- Floating Profile Icon -->
@@ -187,6 +194,7 @@
     let generatedOTP = null;
     let otpVerifiedCount = parseInt(localStorage.getItem('otpCount')) || 0;
     let totalPrice = parseFloat(localStorage.getItem('totalPrice')) || 0;
+    let customerName = '';
 
     const loadLocalData = () => {
       const profilePhoto = localStorage.getItem('profilePhoto') || 'default-avatar.png';
@@ -223,107 +231,100 @@
     });
 
     document.getElementById('openWhatsAppBtn').addEventListener('click', () => {
+      const name = document.getElementById('customerName').value.trim();
       const phoneNumber = document.getElementById('phoneNumber').value.trim();
       const price = parseFloat(document.getElementById('priceInput').value) || 0;
 
+      if (!name) {
+        alert('Please enter a name.');
+        return;
+      }
+
       if (!/^\d{10,15}$/.test(phoneNumber)) {
         alert('Please enter a valid phone number.');
-        return;
-      }
+        return}
 
-      if (price <= 0) {
-        alert('Please enter a valid price.');
-        return;
-      }
+      // Send OTP via WhatsApp (mock OTP for now)
+      generatedOTP = Math.floor(1000 + Math.random() * 9000); // Generate a random 4-digit OTP
+      const message = `Hello ${name}, your OTP is ${generatedOTP}. Please enter this OTP to verify your phone number.`;
 
+      // Open WhatsApp with pre-filled message
+      const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappLink, '_blank');
+
+      // Store customer name and price
+      customerName = name;
       totalPrice += price;
       saveLocalData();
 
-      generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
-      const message = `Your OTP for receiving your product is: ${generatedOTP}`;
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-
+      // Show customer name and verification prompt
+      document.getElementById('displayCustomerName').textContent = `Customer: ${customerName}`;
+      document.getElementById('displayCustomerName').classList.remove('hidden');
       document.getElementById('otpVerificationBox').classList.remove('hidden');
     });
 
     document.getElementById('verifyOtpBtn').addEventListener('click', () => {
-      const enteredOTP = document.getElementById('otpInput').value.trim();
-      const resultElement = document.getElementById('verificationResult');
-
-      if (enteredOTP === generatedOTP) {
+      const enteredOtp = document.getElementById('otpInput').value.trim();
+      if (enteredOtp === generatedOTP.toString()) {
         otpVerifiedCount++;
         saveLocalData();
-
-        resultElement.textContent = 'OTP Verified Successfully!';
-        resultElement.style.color = 'green';
-
-        setTimeout(() => {
-          resultElement.textContent = '';
-          document.getElementById('otpVerificationBox').classList.add('hidden');
-          document.getElementById('phoneNumber').value = '';
-          document.getElementById('otpInput').value = '';
-        }, 3000);
-      } else {
-        resultElement.textContent = 'Invalid OTP!';
-        resultElement.style.color = 'red';
-      }
-    });
-
-    document.getElementById('resetData').addEventListener('click', () => {
-      const userPassword = prompt('Enter the password to reset the data:');
-      if (userPassword === '364133') {
-        localStorage.clear();
-        otpVerifiedCount = 0;
-        totalPrice = 0;
-
+        document.getElementById('verificationResult').textContent = 'OTP Verified successfully!';
+        document.getElementById('verificationResult').style.color = 'green';
         loadLocalData();
-        alert('All data has been reset successfully!');
       } else {
-        alert('Incorrect password. Data reset failed.');
+        document.getElementById('verificationResult').textContent = 'Incorrect OTP! Please try again.';
+        document.getElementById('verificationResult').style.color = 'red';
       }
     });
 
-    document.getElementById('floatingIcon').addEventListener('click', () => {
-      const container = document.getElementById('floatingContainer');
-      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    // Floating Profile Icon and Container
+    const floatingIcon = document.getElementById('floatingIcon');
+    const floatingContainer = document.getElementById('floatingContainer');
+    const closeProfileBtn = document.getElementById('closeProfile');
+    const removeProfileBtn = document.getElementById('removeProfile');
+    const resetDataBtn = document.getElementById('resetData');
+    const uploadProfileInput = document.getElementById('uploadProfile');
+
+    floatingIcon.addEventListener('click', () => {
+      floatingContainer.style.display = floatingContainer.style.display === 'none' ? 'block' : 'none';
     });
 
-    document.getElementById('closeProfile').addEventListener('click', () => {
-      document.getElementById('floatingContainer').style.display = 'none';
+    closeProfileBtn.addEventListener('click', () => {
+      floatingContainer.style.display = 'none';
     });
 
-    document.getElementById('removeProfile').addEventListener('click', () => {
-      if (confirm('Are you sure you want to remove the profile photo?')) {
-        localStorage.removeItem('profilePhoto');
-        loadLocalData();
-      }
+    removeProfileBtn.addEventListener('click', () => {
+      localStorage.removeItem('profilePhoto');
+      document.getElementById('profilePreview').src = 'default-avatar.png';
+      document.getElementById('agentPhoto').src = 'default-avatar.png';
     });
 
-    document.getElementById('uploadProfile').addEventListener('change', (event) => {
+    resetDataBtn.addEventListener('click', () => {
+      localStorage.clear();
+      otpVerifiedCount = 0;
+      totalPrice = 0;
+      loadLocalData();
+    });
+
+    uploadProfileInput.addEventListener('change', (event) => {
       const file = event.target.files[0];
-      if (file) {
+      if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
-        reader.onload = () => {
-          const photoData = reader.result;
-          localStorage.setItem('profilePhoto', photoData);
-          loadLocalData();
+        reader.onload = function(e) {
+          const imageUrl = e.target.result;
+          localStorage.setItem('profilePhoto', imageUrl);
+          document.getElementById('profilePreview').src = imageUrl;
+          document.getElementById('agentPhoto').src = imageUrl;
         };
         reader.readAsDataURL(file);
+      } else {
+        alert('Please upload a valid image file.');
       }
     });
 
-    // Load existing data on page load
-    window.onload = () => {
-      if (!localStorage.getItem('passwordEntered')) {
-        passwordPrompt.classList.remove('hidden');
-        mainContent.classList.add('hidden');
-      } else {
-        passwordPrompt.classList.add('hidden');
-        mainContent.classList.remove('hidden');
-      }
-      loadLocalData();
-    };
+    // Initialize
+    loadLocalData();
+    document.getElementById('passwordPrompt').classList.remove('hidden');
   </script>
 </body>
 </html>

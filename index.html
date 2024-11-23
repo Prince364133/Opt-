@@ -293,18 +293,20 @@
       floatingContainer.style.display = 'none';
     });
 
-    removeProfileBtn.addEventListener('click', () => {
-      localStorage.removeItem('profilePhoto');
-      document.getElementById('profilePreview').src = 'default-avatar.png';
-      document.getElementById('agentPhoto').src = 'default-avatar.png';
-    });
-
     resetDataBtn.addEventListener('click', () => {
-      localStorage.clear();
-      otpVerifiedCount = 0;
-      totalPrice = 0;
-      loadLocalData();
-    });
+  // Prompt for password to reset data
+  const enteredPassword = prompt("Please enter the password to reset profile data:");
+
+  if (enteredPassword === '3641') {  // Password to allow reset
+    localStorage.clear();  // Clear all localStorage data
+    otpVerifiedCount = 0;
+    totalPrice = 0;
+    loadLocalData();  // Reload local data to reflect the reset
+    alert('Profile data has been reset successfully.');
+  } else {
+    alert('Incorrect password! Cannot reset profile data.');
+  }
+});
 
     uploadProfileInput.addEventListener('change', (event) => {
       const file = event.target.files[0];

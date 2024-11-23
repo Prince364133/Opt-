@@ -7,8 +7,9 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
       text-align: center;
+      background-color: #f5f5f5;
     }
     .container {
       max-width: 400px;
@@ -17,6 +18,8 @@
       border: 1px solid #ddd;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: white;
+      margin-top: 50px;
     }
     .header {
       font-size: 24px;
@@ -114,47 +117,70 @@
     .small-btn:hover {
       background-color: #c0392b;
     }
+
+    /* Mobile View */
+    @media (max-width: 768px) {
+      .floating-container {
+        width: 90%;
+        bottom: 70px;
+        right: 5%;
+      }
+      .container {
+        width: 90%;
+        margin-top: 20px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <span class="english">Snap</span> <span class="hindi">शिक्षा</span>
-    </div>
-
-    <!-- Phone Number Input -->
-    <input type="text" id="phoneNumber" placeholder="Enter phone number with country code (e.g., 919876543210)">
-    <button id="openWhatsAppBtn">Send OTP via WhatsApp</button>
-
-    <!-- Price Input -->
-    <input type="number" id="priceInput" placeholder="Enter Price (₹)" required>
-
-    <!-- OTP Verification Box -->
-    <div id="otpVerificationBox" class="hidden">
-      <h3>Verify OTP</h3>
-      <input type="text" id="otpInput" placeholder="Enter OTP">
-      <button id="verifyOtpBtn">Verify OTP</button>
-      <p id="verificationResult" class="result"></p>
+  <div id="passwordPrompt" class="hidden">
+    <div style="padding: 20px;">
+      <h3>Please enter the password to continue:</h3>
+      <input type="password" id="passwordInput" placeholder="Enter Password">
+      <button id="submitPasswordBtn">Submit</button>
     </div>
   </div>
 
-  <!-- Floating Profile Icon -->
-  <div class="floating-icon" id="floatingIcon">
-    <img id="profilePreview" src="default-avatar.png" alt="Profile Icon">
-  </div>
+  <div id="mainContent" class="hidden">
+    <div class="container">
+      <div class="header">
+        <span class="english">Snap</span> <span class="hindi">शिक्षा</span>
+      </div>
 
-  <!-- Floating Container -->
-  <div class="floating-container" id="floatingContainer">
-    <h3>Agent Details</h3>
-    <img id="agentPhoto" src="default-avatar.png" alt="Agent Photo">
-    <p><strong>Agent Name:</strong> <span id="agentName">John Doe</span></p>
-    <p><strong>OTP Verified Count:</strong> <span id="otpCount">0</span></p>
-    <p><strong>Last Verified:</strong> <span id="lastVerifiedDateTime">N/A</span></p>
-    <p><strong>Total Price:</strong> ₹<span id="totalPrice">0</span></p>
-    <input type="file" id="uploadProfile" accept="image/*">
-    <button id="removeProfile" class="small-btn">Remove Profile</button>
-    <button id="resetData" class="small-btn" style="background-color: #e67e22;">Reset Data</button>
-    <button id="closeProfile" class="small-btn" style="background-color: #3498db;">Close</button>
+      <!-- Phone Number Input -->
+      <input type="text" id="phoneNumber" placeholder="Enter phone number with country code (e.g., 919876543210)">
+      <button id="openWhatsAppBtn">Send OTP via WhatsApp</button>
+
+      <!-- Price Input -->
+      <input type="number" id="priceInput" placeholder="Enter Price (₹)" required>
+
+      <!-- OTP Verification Box -->
+      <div id="otpVerificationBox" class="hidden">
+        <h3>Verify OTP</h3>
+        <input type="text" id="otpInput" placeholder="Enter OTP">
+        <button id="verifyOtpBtn">Verify OTP</button>
+        <p id="verificationResult" class="result"></p>
+      </div>
+    </div>
+
+    <!-- Floating Profile Icon -->
+    <div class="floating-icon" id="floatingIcon">
+      <img id="profilePreview" src="default-avatar.png" alt="Profile Icon">
+    </div>
+
+    <!-- Floating Container -->
+    <div class="floating-container" id="floatingContainer">
+      <h3>Agent Details</h3>
+      <img id="agentPhoto" src="default-avatar.png" alt="Agent Photo">
+      <p><strong>Agent Name:</strong> <span id="agentName">John Doe</span></p>
+      <p><strong>OTP Verified Count:</strong> <span id="otpCount">0</span></p>
+      <p><strong>Last Verified:</strong> <span id="lastVerifiedDateTime">N/A</span></p>
+      <p><strong>Total Price:</strong> ₹<span id="totalPrice">0</span></p>
+      <input type="file" id="uploadProfile" accept="image/*">
+      <button id="removeProfile" class="small-btn">Remove Profile</button>
+      <button id="resetData" class="small-btn" style="background-color: #e67e22;">Reset Data</button>
+      <button id="closeProfile" class="small-btn" style="background-color: #3498db;">Close</button>
+    </div>
   </div>
 
   <script>
@@ -181,18 +207,32 @@
       localStorage.setItem('totalPrice', totalPrice.toFixed(2));
     };
 
+    // Password prompt check
+    const passwordPrompt = document.getElementById('passwordPrompt');
+    const mainContent = document.getElementById('mainContent');
+    const submitPasswordBtn = document.getElementById('submitPasswordBtn');
+
+    submitPasswordBtn.addEventListener('click', () => {
+      const enteredPassword = document.getElementById('passwordInput').value;
+      if (enteredPassword === '123456') {
+        passwordPrompt.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+      } else {
+        alert('Incorrect password! Please try again.');
+      }
+    });
+
     document.getElementById('openWhatsAppBtn').addEventListener('click', () => {
       const phoneNumber = document.getElementById('phoneNumber').value.trim();
       const price = parseFloat(document.getElementById('priceInput').value) || 0;
 
-      // Validate that the price is not empty
-      if (price <= 0) {
-        alert('Please enter a valid price.');
+      if (!/^\d{10,15}$/.test(phoneNumber)) {
+        alert('Please enter a valid phone number.');
         return;
       }
 
-      if (!/^\d{10,15}$/.test(phoneNumber)) {
-        alert('Please enter a valid phone number.');
+      if (price <= 0) {
+        alert('Please enter a valid price.');
         return;
       }
 
@@ -235,7 +275,9 @@
       if (userPassword === '364133') {
         localStorage.clear();
         otpVerifiedCount = 0;
-        totalPrice = 0;loadLocalData();
+        totalPrice = 0;
+
+        loadLocalData();
         alert('All data has been reset successfully!');
       } else {
         alert('Incorrect password. Data reset failed.');
@@ -272,7 +314,16 @@
     });
 
     // Load existing data on page load
-    window.onload = loadLocalData;
+    window.onload = () => {
+      if (!localStorage.getItem('passwordEntered')) {
+        passwordPrompt.classList.remove('hidden');
+        mainContent.classList.add('hidden');
+      } else {
+        passwordPrompt.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+      }
+      loadLocalData();
+    };
   </script>
 </body>
 </html>
